@@ -1,0 +1,7 @@
+#!/bin/sh
+
+GJS_PATH=.
+
+export GJS_PATH
+
+gjs colors.js
