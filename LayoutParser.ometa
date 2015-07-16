@@ -88,7 +88,7 @@ let LayoutParser = ometa(BaseStrParser) {
   assocExpr    = expr:e "?" expr:c                                        -> [#condCalcExpr, c, e]
                | expr:e                                                   -> [#calcExpr, e],
 
-  assoc        = name:n ":=" listOf(#assocExpr, "|"):es                   -> [n, es],
+  assoc        = name:n ":=" listOf(#assocExpr, "|"):es                   -> [#assoc, n, es],
 
-  allocation   = (assoc:s spaces -> s)*:ss end                            -> ss,
+  allocation   = (assoc:s spaces -> s)*:ss end                            -> [#allocation, ss],
 };
