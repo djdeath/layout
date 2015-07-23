@@ -29,6 +29,7 @@ let LayoutIndexConditioner = ometa(GenericMatcher) {
   allocation trans*:ee                   -> [#allocation].concat(ee),
 };
 LayoutIndexConditioner._access = function(a) {
+  if (!this._childrenAccess) this._childrenAccess = [];
   this._childrenAccess.push(a);
 };
 LayoutIndexConditioner._resetAccesses = function(a) {
