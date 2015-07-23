@@ -36,7 +36,7 @@ let LayoutParser = ometa(BaseStrParser) {
   space        = ^space | fromTo('//', '\n'),
 
   // Numbers:
-  number       = spaces <digit+ ('.' digit+)?>:f                          -> [#number, parseFloat(f)],
+  number       = spaces <digit+ ('.' digit+)?>:f                          -> parseFloat(f),
 
   // Identifiers:
   nameFirst    = letter | '$' | '_',
@@ -88,7 +88,7 @@ let LayoutParser = ometa(BaseStrParser) {
   assocExpr    = expr:e "?" expr:c                                        -> [#condCalcExpr, c, e]
                | expr:e                                                   -> [#calcExpr, e],
 
-  assoc        = name:n ":=" listOf(#assocExpr, "|"):es                   -> [#assoc, n, es],
+  assoc        = name:n ":=" listOf(#assocExpr, "|"):es                   -> [#assoc, n].concat(es),
 
-  allocation   = (assoc:s spaces -> s)*:ss end                            -> [#allocation, ss],
+  allocation   = (assoc:s spaces -> s)*:ss end                            -> [#allocation].concat(ss),
 };

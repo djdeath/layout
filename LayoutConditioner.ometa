@@ -1,0 +1,52 @@
+let LayoutIndexConditioner = ometa(GenericMatcher) {
+  trans   =  [:t apply(t):ans]           -> ans,
+
+  number   :n                            -> [#number, n],
+  name     :s                            -> [#name, s],
+  string   :s                            -> [#string, s],
+  arr      trans*:xs                     -> [#arr, xs],
+
+  get      :x                            -> [#get, x],
+  getp     trans:fd trans:x              -> [#getp, fd, x],
+  send     :msg trans:recv trans*:args   -> [#send, msg, recv, args],
+  call     trans:fn trans*:args          -> [#call, fn, args],
+
+  unop     :op trans:x                   -> [#unop, op, x],
+  binop    :op trans:x trans:y           -> [#binop, op, x, y],
+
+  currentChild :p                        -> [#currentChild, p],
+  parent       :p                        -> [#parent, p],
+  child trans:i { this._access(i); } :p  -> [#child, i, p],
+
+  calcExpr { this._resetAccesses(); }
+     trans:e
+     !this._buildAccessCondition(null):c -> (c ? [#condCalcExpr, c, e] : [#calcExpr, e]),
+  condCalcExpr { this._resetAccesses(); }
+               trans:c trans:e           -> [#condCalcExpr, this._buildAccessCondition(c), e],
+
+  assoc :p trans*:ee                     -> [#assoc, p].concat(ee),
+
+  allocation trans*:ee                   -> [#allocation].concat(ee),
+};
+LayoutIndexConditioner._access = function(a) {
+  this._childrenAccess.push(a);
+};
+LayoutIndexConditioner._resetAccesses = function(a) {
+  this._childrenAccess = [];
+};
+LayoutIndexConditioner._buildAccessCondition = function(cond) {
+  let c = cond, conds = {};
+  for (let i = 0; i < this._childrenAccess.length; i++) {
+    let indexAccess = [#binop, "+", [#get, 'index'], this._childrenAccess[i]];
+    let condAccess = [#binop, "&&",
+                     [#binop, '>=', indexAccess, [#number, 0]],
+                     [#binop, '<', indexAccess, [#getp,
+                                                 [#string, 'length'],
+                                                 [#get, 'children']]]];
+    let scond = JSON.stringify(condAccess);
+    if (conds[scond]) continue;
+    c = (c == null) ? condAccess : [#binop, "&&", condAccess, c];
+    conds[scond] = true;
+  }
+  return c;
+};

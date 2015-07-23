@@ -1,10 +1,12 @@
 let LayoutTranslator = ometa(GenericMatcher) {
-  trans  = [:t apply(t):ans] -> ans,
+  trans  =  [:t apply(t):ans]            -> ans,
 
   number   :n                            -> ('(' + n + ')'),
   name     :s                            -> s,
+  string   :s                            -> s.toProgramString(),
   arr      trans*:xs                     -> ('[' + xs.join(',') + ']'),
 
+  get      :x                            -> x,
   getp     trans:fd trans:x              -> (x + '[' + fd + ']'),
   send     :msg trans:recv trans*:args   -> (recv + '.' + msg + '(' + args.join(',') + ')'),
   call     trans:fn trans*:args          -> (fn + '(' + args.join(',') + ')'),
@@ -14,14 +16,15 @@ let LayoutTranslator = ometa(GenericMatcher) {
   binop    :op trans:x trans:y           -> ('(' + x + ' ' + op + ' ' + y + ')'),
 
   //
-  currentChild :p                        -> ('child.' + p),
+  currentChild :p                        -> ('children[index].' + p),
   parent       :p                        -> ('parent.' + p),
-  child        trans:i :p                -> ('children[' + i + '].' + p),
+  child        trans:i :p                -> ('children[index + ' + i + '].' + p),
 
   //
-  calcExpr     trans:e                   -> e,
-  condCalcExpr trans:c trans:e           -> e,
+  calcExpr     trans:e                   -> ['return ', e, ';'].join(''),
+  condCalcExpr trans:c trans:e           -> ['if (', c, ')', 'return ', e, ';'].join(''),
 
-  //
-  assoc :n (trans:e
+  assoc :p trans*:ee                     -> ['result.', p, '=', 'function(){'].concat(ee).concat(['}();']).join(''),
+
+  allocation trans*:ee                   -> ['function (result,index,parent,children){\n'].concat(ee.join('\n')).concat(['\n}']).join(''),
 };
