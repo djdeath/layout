@@ -17,27 +17,6 @@ let replaceLayoutFunction = function(text) {
 
 /**/
 
-const MyLayout = new Lang.Class({
-  Name: 'MyLayout',
-  Extends: Clutter.LayoutManager,
-
-  _init: function(args) {
-    this.parent(args);
-  },
-
-  vfunc_allocate: function (container, allocation, flags) {
-    let children = container.get_children();
-    for (let i = 0; i < children.length; i++) {
-      let child = children[i];
-      let childAllocation = new Clutter.ActorBox({ x1:0, y1:0, x2: child.width, y2: child.height });
-      child.allocate(childAllocation, flags);
-      layoutFunc(child, i, container, children);
-    }
-  },
-});
-
-/**/
-
 GtkClutter.init(null, null);
 
 let win = new Gtk.Window();
@@ -52,8 +31,17 @@ embed_stage.set_size_request(800, 600);
 paned.add1(embed_stage);
 
 let stage = embed_stage.get_stage();
-stage.layout_manager = new MyLayout();
 stage.background_color = new Clutter.Color({ alpha: 0xff });
+
+let relayout = function() {
+  let children = stage.get_children();
+  for (let i = 0; i < children.length; i++) {
+    let child = children[i];
+    let childAllocation = new Clutter.ActorBox({ x1:0, y1:0, x2: child.width, y2: child.height });
+    layoutFunc(child, i, stage, children);
+  }
+};
+stage.connect('allocation-changed', relayout);
 
 let nbColors = 100;
 let divisions = 4;
@@ -86,7 +74,7 @@ buffer.connect('changed', function() {
                              buffer.get_end_iter(),
                              true);
   replaceLayoutFunction(text);
-  stage.queue_relayout();
+  relayout();
 }.bind(this));
 
 /**/
