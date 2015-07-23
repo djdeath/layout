@@ -11,26 +11,23 @@
 // height := height^
 
 // hbox:
-// x := x{-1}
-//    | 0
+// translation_x := translation_x{-1} + width{-1}
+//                | 0
 // y := 0
-// width := width^ / length^
-// height := height^
 
 // vbox:
-// x := 0
-// y := y{-1}
-//    | 0
-// width := width^
-// height := height^ / length^
+// translation_x := 0
+// translation_y := translation_y{-1} + height{-1}
+//                | 0
 
 // grid:
-// x := x{-1}               ? x + width! < width^
-//    | 0
-// y := y{-1}               ? x + width! < width^
-//    | y{-1} + height{-1}
-// width := width!
-// height := height!
+// translation_x := translation_x{-1} + width{-1} ? translation_x{-1} + + width{-1} + width! < width^
+//                | 0
+// translation_y := translation_y{-1} ? translation_x{-1} + width{-1} + width! < width^
+//                | max_y{-1}
+//                | 0
+// max_y         := Math.max(translation_y! + height!, max_y{-1})
+//                | translation_y! + height!
 
 let LayoutParser = ometa(BaseStrParser) {
   space        = ^space | fromTo('//', '\n'),

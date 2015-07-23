@@ -8,7 +8,7 @@ let LayoutIndexConditioner = ometa(GenericMatcher) {
 
   get      :x                            -> [#get, x],
   getp     trans:fd trans:x              -> [#getp, fd, x],
-  send     :msg trans:recv trans*:args   -> [#send, msg, recv, args],
+  send     :msg trans:recv trans*:args   -> [#send, msg, recv].concat(args),
   call     trans:fn trans*:args          -> [#call, fn, args],
 
   unop     :op trans:x                   -> [#unop, op, x],
