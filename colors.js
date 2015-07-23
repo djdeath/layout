@@ -1,31 +1,18 @@
+const Gtk = imports.gi.Gtk;
 const Clutter = imports.gi.Clutter;
+const GtkClutter = imports.gi.GtkClutter;
+const GtkSource = imports.gi.GtkSource;
 const Gio = imports.gi.Gio;
 const Lang = imports.lang;
-//const Layout = imports.Layout;
 
 /**/
-
-// let loadFile = function(path) {
-//   let file = Gio.File.new_for_path(path);
-//   let [, source] = file.load_contents(null);
-//   return '' + source;
-// };
-
-// let translate = function(input) {
-//   try {
-//     let structure = Layout.LayoutParser.matchAllStructure(input, 'allocation', undefined);
-//     //let code = jsEmul.BSJSTranslator.match(structure.value, 'trans', undefined);
-//     //return code;
-//     log(JSON.stringify(structure));
-//   } catch (e) {
-//     log(e);
-//   }
-// };
-
-// translate(loadFile('./test.js'));
-
-let allocationBoxToString = function(box) {
-  return box.x1 + 'x' + box.y1 + ' -> ' + box.x2 + 'x' + box.y2;
+let layoutFunc = function() {};
+let replaceLayoutFunction = function(text) {
+  try {
+    layoutFunc = eval('(function() { return ' + text + '; })()');
+  } catch (error) {
+    log(error);
+  }
 };
 
 /**/
@@ -39,34 +26,34 @@ const MyLayout = new Lang.Class({
   },
 
   vfunc_allocate: function (container, allocation, flags) {
-    let layoutChild = function (result,index,parent,children){
-      result.translation_x=function(){if ((((index + (- (1))) >= (0)) && ((index + (- (1))) < children["length"])))return (children[index + (- (1))].translation_x + children[index + (- (1))].width);return (0);}();
-      result.translation_y=function(){if ((((index + (- (1))) >= (0)) && ((index + (- (1))) < children["length"])))return (children[index + (- (1))].translation_y + children[index + (- (1))].height);return (0);}();
-    };
     let children = container.get_children();
     for (let i = 0; i < children.length; i++) {
       let child = children[i];
       let childAllocation = new Clutter.ActorBox({ x1:0, y1:0, x2: child.width, y2: child.height });
       child.allocate(childAllocation, flags);
-      layoutChild(child, i, container, children);
-      //log(allocationBoxToString(childAllocation));
+      layoutFunc(child, i, container, children);
     }
   },
 });
 
 /**/
 
-Clutter.init(null, null);
+GtkClutter.init(null, null);
 
-let stage = new Clutter.Stage({
-  width: 800,
-  height: 600,
-  layout_manager: new MyLayout(),
-  user_resizable: true,
-  background_color: new Clutter.Color({ alpha: 0xff }),
-});
-stage.connect('destroy',
-              function() { Clutter.main_quit(); }.bind(this));
+let win = new Gtk.Window();
+win.resize(800, 600);
+win.connect('destroy',
+            function() { Gtk.main_quit(); }.bind(this));
+let paned = Gtk.Paned.new(Gtk.Orientation.VERTICAL);
+win.add(paned);
+
+let embed_stage = new GtkClutter.Embed();
+embed_stage.set_size_request(800, 600);
+paned.add1(embed_stage);
+
+let stage = embed_stage.get_stage();
+stage.layout_manager = new MyLayout();
+stage.background_color = new Clutter.Color({ alpha: 0xff });
 
 let nbColors = 100;
 let divisions = 4;
@@ -83,6 +70,26 @@ for (let i = 0; i < nbColors; i++) {
   stage.add_child(actor);
 }
 
-stage.show();
+/**/
 
-Clutter.main();
+let createEditor = function() {
+  let scrollview = new Gtk.ScrolledWindow();
+  paned.add2(scrollview);
+  let textview = new GtkSource.View();
+  scrollview.add(textview);
+  return textview.buffer;
+};
+
+let buffer = createEditor();
+buffer.connect('changed', function() {
+  let text = buffer.get_text(buffer.get_start_iter(),
+                             buffer.get_end_iter(),
+                             true);
+  replaceLayoutFunction(text);
+  stage.queue_relayout();
+}.bind(this));
+
+/**/
+win.show_all();
+
+Gtk.main();
