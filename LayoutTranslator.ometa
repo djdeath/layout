@@ -1,30 +1,34 @@
 let LayoutTranslator = ometa(GenericMatcher) {
   trans  =  [:t apply(t):ans]            -> ans,
 
-  number   :n                            -> ('(' + n + ')'),
-  name     :s                            -> s,
-  string   :s                            -> s.toProgramString(),
-  arr      trans*:xs                     -> ('[' + xs.join(',') + ']'),
+  number   :n                            -> [#number, n],
+  name     :s                            -> [#name, s],
+  string   :s                            -> [#string, s],
+  arr      trans*:xs                     -> [#arr].concat(xs),
 
-  get      :x                            -> x,
-  getp     trans:fd trans:x              -> (x + '[' + fd + ']'),
-  send     :msg trans:recv trans*:args   -> (recv + '.' + msg + '(' + args.join(',') + ')'),
-  call     trans:fn trans*:args          -> (fn + '(' + args.join(',') + ')'),
+  get      :x                            -> [#get, x],
+  getp     trans:fd trans:x              -> [#getp, fd, x],
+  send     :msg trans:recv trans*:args   -> [#send, msg, recv].concat(args),
+  call     trans:fn trans*:args          -> [#call, fn].concat(args),
 
 
-  unop     :op trans:x                   -> ('(' + op + ' ' + x + ')'),
-  binop    :op trans:x trans:y           -> ('(' + x + ' ' + op + ' ' + y + ')'),
-
-  //
-  currentChild :p                        -> ('children[index].' + p),
-  parent       :p                        -> ('parent.' + p),
-  child        trans:i :p                -> ('children[index + ' + i + '].' + p),
+  unop     :op trans:x                   -> [#unop, op, x],
+  binop    :op trans:x trans:y           -> [#binop, op, x, y],
 
   //
-  calcExpr     trans:e                   -> ['return ', e, ';'].join(''),
-  condCalcExpr trans:c trans:e           -> ['if (', c, ')', 'return ', e, ';'].join(''),
+  currentChild :p                        -> [#getp, [#string, p], [#getp, [#get, "index"], [#get, "children"]]],
+  parent       :p                        -> [#getp, [#string, p], [#get, "parent"]],
+  child        trans:i :p                -> [#getp, [#string, p], [#getp, [#binop,"+", [#get, "index"], i], [#get, "children"]]],
 
-  assoc :p trans*:ee                     -> ['result.', p, '=', 'function(){'].concat(ee).concat(['}();']).join(''),
+  //
+  calcExpr     trans:e                   -> [#return, e],
+  condCalcExpr trans:c trans:e           -> [#if, c, [#return, e], [#get, "undefined"]],
 
-  allocation trans*:ee                   -> ['function (result,index,parent,children){\n'].concat(ee.join('\n')).concat(['\n}']).join(''),
+  assoc :p trans*:ee                     -> [#set,
+                                             [#getp, [#string, p], [#get, "result"]],
+                                             [#func, [], [#beginTop].concat(ee)]],
+
+  allocation trans*:ee                   -> [#beginTop, [#func,
+                                                         ["result","index","parent","children"],
+                                                         [#beginTop].concat(ee)]],
 };
