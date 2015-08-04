@@ -1,3 +1,6 @@
+// Conditioner:
+// Walks the AST and extracts access to neighbor's to build up
+// conditions.
 let LayoutIndexConditioner = ometa(GenericMatcher) {
   trans   =  [:t apply(t):ans]           -> ans,
 

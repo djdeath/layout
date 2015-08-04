@@ -1,3 +1,6 @@
+// Translator:
+//
+// Transforms the LayoutParser's AST into a JavaScript AST.
 let LayoutTranslator = ometa(GenericMatcher) {
   trans  =  [:t apply(t):ans]            -> ans,
 

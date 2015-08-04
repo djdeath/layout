@@ -1,3 +1,5 @@
+// Examples:
+//
 // fixed:
 // x := x!
 // y := y!
@@ -29,6 +31,7 @@
 // max_y         := Math.max(translation_y! + height!, max_y{-1})
 //                | translation_y! + height!
 
+// The parser
 let LayoutParser = ometa(BaseStrParser) {
   space        = ^space | fromTo('//', '\n'),
 
