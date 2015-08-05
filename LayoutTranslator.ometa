@@ -29,7 +29,7 @@ let LayoutTranslator = ometa(GenericMatcher) {
 
   assoc :p trans*:ee                     -> [#set,
                                              [#getp, [#string, p], [#get, "result"]],
-                                             [#func, [], [#beginTop].concat(ee)]],
+                                             [#call, [#func, [], [#beginTop].concat(ee)]]],
 
   allocation trans*:ee                   -> [#beginTop, [#func,
                                                          ["result","index","parent","children"],

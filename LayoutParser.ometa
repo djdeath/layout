@@ -15,7 +15,7 @@
 // hbox:
 // translation_x := translation_x{-1} + width{-1}
 //                | 0
-// y := 0
+// translation_y := 0
 
 // vbox:
 // translation_x := 0
